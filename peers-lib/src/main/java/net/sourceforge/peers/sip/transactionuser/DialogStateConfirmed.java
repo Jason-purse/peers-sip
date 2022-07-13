@@ -21,6 +21,12 @@ package net.sourceforge.peers.sip.transactionuser;
 
 import net.sourceforge.peers.Logger;
 
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 17:19
+ * @Description Confirmed 确定状态下,不应该接收 101 - 199 / 200 / 300 / 699
+ */
 public class DialogStateConfirmed extends DialogState {
 
     public DialogStateConfirmed(String id, Dialog dialog, Logger logger) {

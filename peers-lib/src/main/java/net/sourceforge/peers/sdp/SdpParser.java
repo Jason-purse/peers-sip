@@ -29,7 +29,12 @@ import java.util.Hashtable;
 import java.util.List;
 
 import net.sourceforge.peers.rtp.RFC3551;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:03
+ * @Description SDP 解析器 用来解析 SDP 会话的 ...
+ */
 public class SdpParser {
 
 	public SessionDescription parse(byte[] body) throws IOException {

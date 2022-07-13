@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!--
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--
     This file is part of Peers.
 
     This program is free software: you can redistribute it and/or modify
@@ -16,27 +15,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     Copyright 2007-2013 Yohann Martineau
--->
-<peers xmlns="http://peers.sourceforge.net"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://peers.sourceforge.net peers.xsd">
+--><peers xmlns="http://peers.sourceforge.net" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://peers.sourceforge.net peers.xsd">
   <!-- a specific address can be specified here, may you have several
        network interfaces, or several addresses on a specific interface,
        you can specify an address to bind on here. -->
   <!-- Example: 192.168.1.20 -->
-  <ipAddress></ipAddress>
+  <ipAddress/>
   <!-- username (corresponding to the user part of your sip uri) -->
   <!-- Example: alice -->
-  <userPart></userPart>
+  <userPart>smileboy</userPart>
   <!-- domain (corresponding to the domain part of your sip uri) -->
   <!-- Example: atlanta.com -->
-  <domain></domain>
+  <domain>iptel.org</domain>
   <!-- if password is empty, no REGISTER message is sent -->
   <!-- Example: 1234 -->
-  <password></password>
+  <password>Flj179020326</password>
   <!-- you can specify an outbound proxy for registration and calls -->
   <!-- Example: sip:192.168.1.20;lr -->
-  <outboundProxy></outboundProxy>
+  <outboundProxy/>
   <!-- you can specify the sip listening port you want, 0 can be used to
        choose a random free port -->
   <!-- Example: 5060 -->
@@ -46,7 +42,7 @@
   <rtpPort>0</rtpPort>
   <!-- if you need to specify an authorization username different than
        the userPart, if empty will default to what is specified in userPart -->
-  <authorizationUsername></authorizationUsername>
+  <authorizationUsername/>
   <!-- mediaMode corresponds to the way media is managed. Three values are
        possible for this parameter:
          - captureAndPlayback: capture sound from microphone, send
@@ -56,7 +52,7 @@
            those packets to remote party
          - none: no media is capture, played, send nor received
          - file: stream audio from audio file provided in mediaFile -->
-  <mediaMode>captureAndPlayback</mediaMode>
+  <mediaMode>file</mediaMode>
   <!-- mediaDebug is a boolean parameter. If set to true, files will be
        created in a media directory in peers.home directory. Those files will
        contain raw data at input and output of microphone, encoder, rtp
@@ -66,5 +62,5 @@
        file with the following format: linear PCM 8kHz, 16 bits signed,
        mono-channel, little endian.  -->
   <!-- Example: media/message.raw -->
-  <mediaFile></mediaFile>
+  <mediaFile>media/test.pcm</mediaFile>
 </peers>

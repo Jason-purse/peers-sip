@@ -36,7 +36,14 @@ import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:13
+ * @Description 事务管理器 ...
+ *
+ * 用来管理客户端 / 服务器端的事务
+ */
 public class TransactionManager {
 
     protected Timer timer;
@@ -56,11 +63,13 @@ public class TransactionManager {
         timer = new Timer(TransactionManager.class.getSimpleName()
                 + " " + Timer.class.getSimpleName());
     }
-    
+
+    //  创建一个客户端事务
     public ClientTransaction createClientTransaction(SipRequest sipRequest,
             InetAddress inetAddress, int port, String transport,
             String pBranchId, ClientTransactionUser clientTransactionUser) {
         String branchId;
+        // pBranchId ??
         if (pBranchId == null || "".equals(pBranchId.trim())
                 || !pBranchId.startsWith(RFC3261.BRANCHID_MAGIC_COOKIE)) {
             branchId = Utils.generateBranchId();
@@ -70,14 +79,17 @@ public class TransactionManager {
         String method = sipRequest.getMethod();
         ClientTransaction clientTransaction;
         if (RFC3261.METHOD_INVITE.equals(method)) {
+            // 那么这是一个Invite 事务
             clientTransaction = new InviteClientTransaction(branchId,
                     inetAddress, port, transport, sipRequest, clientTransactionUser,
                     timer, transportManager, this, logger);
         } else {
+            // 这是一个非Invite 客户端事务
             clientTransaction = new NonInviteClientTransaction(branchId,
                     inetAddress, port, transport, sipRequest, clientTransactionUser,
                     timer, transportManager, this, logger);
         }
+        // 将它放入客户端事务中,并获取一个事务ID
         clientTransactions.put(getTransactionId(branchId, method),
                 clientTransaction);
         return clientTransaction;
@@ -124,6 +136,8 @@ public class TransactionManager {
             String method) {
         ArrayList<ClientTransaction> clientTransactionsFromCallId =
             new ArrayList<ClientTransaction>();
+        // ??? 为什么会有多个 ....
+        // 多次invite ???
         for (ClientTransaction clientTransaction: clientTransactions.values()) {
             Transaction transaction = (Transaction)clientTransaction;
             SipRequest sipRequest = transaction.getRequest();
@@ -196,6 +210,14 @@ public class TransactionManager {
         clientTransactions.remove(getTransactionId(branchId, method));
     }
 
+    /**
+     * 生成一个事务ID ...  每一个branch 都是独一无二的 ...
+     * 也就是说,这一次交流使用相同的branchId ...
+     * 那么事务也就是恒定的 ...
+     * @param branchId
+     * @param method
+     * @return
+     */
     private String getTransactionId(String branchId, String method) {
         StringBuffer buf = new StringBuffer();
         buf.append(branchId);

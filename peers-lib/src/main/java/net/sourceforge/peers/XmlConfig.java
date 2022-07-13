@@ -20,10 +20,17 @@
 package net.sourceforge.peers;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -88,16 +95,15 @@ public class XmlConfig implements Config {
 
     private InetAddress publicInetAddress;
 
-    //private InetAddress
-    public XmlConfig(String fileName, Logger logger) {
-        file = new File(fileName);
+    public XmlConfig(File file,Logger logger) {
+        this.file = file;
         this.logger = logger;
         if (!file.exists()) {
-            logger.debug("config file " + fileName + " not found");
+            logger.debug("config file " + file + " not found");
             return;
         }
         DocumentBuilderFactory documentBuilderFactory =
-            DocumentBuilderFactory.newInstance();
+                DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder;
         try {
             documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -108,7 +114,7 @@ public class XmlConfig implements Config {
         try {
             document = documentBuilder.parse(file);
         } catch (SAXException e) {
-            logger.error("cannot parse " + fileName,e );
+            logger.error("cannot parse " + file,e );
             return;
         } catch (IOException e) {
             logger.error("IOException", e);
@@ -194,6 +200,12 @@ public class XmlConfig implements Config {
         }
     }
 
+    //private InetAddress
+    public XmlConfig(String fileName, Logger logger) {
+        // 通过文件路径信息获取
+        this(new File(fileName),logger);
+    }
+
     private boolean isNullOrEmpty(Node node) {
         return node == null || "".equals(node.getTextContent().trim());
     }
@@ -225,6 +237,7 @@ public class XmlConfig implements Config {
         FileWriter fileWriter;
         try {
             fileWriter = new FileWriter(file);
+
         } catch (IOException e) {
             logger.error("cannot create file writer", e);
             return;

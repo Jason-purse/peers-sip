@@ -41,7 +41,12 @@ import net.sourceforge.peers.sip.transport.SipMessage;
 import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:07
+ * @Description UAC 客户端 ...
+ */
 public class UAC {
     
     private InitialRequestManager initialRequestManager;
@@ -59,6 +64,7 @@ public class UAC {
     
     /**
      * should be instanciated only once, it was a singleton.
+     * 单例...
      */
     public UAC(UserAgent userAgent,
             InitialRequestManager initialRequestManager,
@@ -67,6 +73,7 @@ public class UAC {
             TransactionManager transactionManager,
             TransportManager transportManager,
             Logger logger) {
+
         this.userAgent = userAgent;
         this.initialRequestManager = initialRequestManager;
         this.midDialogRequestManager = midDialogRequestManager;
@@ -128,15 +135,21 @@ public class UAC {
     
     SipRequest invite(String requestUri, String callId)
             throws SipUriSyntaxException {
+
+        // 尝试invite ... 于是请求创建并发送了,进行交互 ...返回了SipRequest ....
+        // 那么本质上应该是可以 一次打出去多个电话的 ...
         return initialRequestManager.createInitialRequest(requestUri,
                 RFC3261.METHOD_INVITE, profileUri, callId);
         
     }
 
+    // 获取invite 事务 ...
     private SipRequest getInviteWithAuth(String callId) {
         List<ClientTransaction> clientTransactions =
             transactionManager.getClientTransactionsFromCallId(callId,
                     RFC3261.METHOD_INVITE);
+
+        // 判断是否需要验证 ...
         SipRequest sipRequestNoAuth = null;
         for (ClientTransaction clientTransaction: clientTransactions) {
             InviteClientTransaction inviteClientTransaction =
@@ -159,8 +172,13 @@ public class UAC {
         return sipRequestNoAuth;
     }
 
+    /**
+     * 中断的时候 ....
+     * @param sipRequest
+     */
     void terminate(SipRequest sipRequest) {
         String callId = Utils.getMessageCallId(sipRequest);
+        // 不包含,加入 ...
         if (!guiClosedCallIds.contains(callId)) {
             guiClosedCallIds.add(callId);
         }

@@ -20,5 +20,5 @@
 package net.sourceforge.peers.media;
 
 public enum MediaMode {
-    none, captureAndPlayback, echo, file
+    none, captureAndPlayback, echo, file,url
 }

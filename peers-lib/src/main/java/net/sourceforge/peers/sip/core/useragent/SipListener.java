@@ -22,23 +22,60 @@ package net.sourceforge.peers.sip.core.useragent;
 
 import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 13:56
+ * @Description Sip 监听器,监听各种事件
+ */
 public interface SipListener {
 
+    /**
+     * 注册中
+     * @param sipRequest
+     */
     public void registering(SipRequest sipRequest);
 
     public void registerSuccessful(SipResponse sipResponse);
 
     public void registerFailed(SipResponse sipResponse);
 
+    /**
+     * 电话进入 ...
+     * @param sipRequest
+     * @param provResponse
+     */
     public void incomingCall(SipRequest sipRequest, SipResponse provResponse);
 
+    /**
+     * 远程挂断 ...
+     * @param sipRequest
+     */
     public void remoteHangup(SipRequest sipRequest);
 
+    /**
+     * 振铃中 ...
+     * @param sipResponse
+     */
     public void ringing(SipResponse sipResponse);
 
+    /**
+     * 被调方 接听 ...
+     * @param sipResponse
+     */
     public void calleePickup(SipResponse sipResponse);
 
+    /**
+     * 错误
+     * @param sipResponse
+     */
     public void error(SipResponse sipResponse);
+
+    /**
+     * 事务失败 ... 请求错误 ....
+     */
+    default void inviteError() {
+        // TODO
+    }
 
 }

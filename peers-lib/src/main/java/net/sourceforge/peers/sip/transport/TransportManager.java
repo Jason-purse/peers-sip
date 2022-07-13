@@ -19,20 +19,6 @@
 
 package net.sourceforge.peers.sip.transport;
 
-import static net.sourceforge.peers.sip.RFC3261.DEFAULT_SIP_VERSION;
-import static net.sourceforge.peers.sip.RFC3261.IPV4_TTL;
-import static net.sourceforge.peers.sip.RFC3261.PARAM_MADDR;
-import static net.sourceforge.peers.sip.RFC3261.PARAM_TTL;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_DEFAULT_PORT;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_PORT_SEP;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_SCTP;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_TCP;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_TLS_PORT;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_UDP;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_UDP_USUAL_MAX_SIZE;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_VIA_SEP;
-import static net.sourceforge.peers.sip.RFC3261.TRANSPORT_VIA_SEP2;
-
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
@@ -54,21 +40,35 @@ import net.sourceforge.peers.sip.syntaxencoding.SipHeaders;
 import net.sourceforge.peers.sip.syntaxencoding.SipParser;
 import net.sourceforge.peers.sip.transaction.TransactionManager;
 
+import static net.sourceforge.peers.sip.RFC3261.*;
 
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:11
+ * @Description 传输管理器 ....
+ * <p>
+ * 也可以说 它决定了通信传输的方式
+ * 例如 udp  / sctp / tcp ... 假设
+ */
 public class TransportManager {
 
     public static final int SOCKET_TIMEOUT = RFC3261.TIMER_T1;
 
     private static int NO_TTL = -1;
-    
+
     private Logger logger;
 
     //private UAS uas;
     private SipServerTransportUser sipServerTransportUser;
-    
+
     protected SipParser sipParser;
-    
+
+    // 查看这个连接是否创建了对应的 Socket
+    // 一个传输连接对应了一个DatagramSocket ..
     private Hashtable<SipTransportConnection, DatagramSocket> datagramSockets;
+    // 同样对应了一个MessageSender / MessageReceiver ...
+    // 那么一个sip 传输连接对应了一个消息发送器(他们由TransportManager 产生)
     private Hashtable<SipTransportConnection, MessageSender> messageSenders;
     private Hashtable<SipTransportConnection, MessageReceiver> messageReceivers;
 
@@ -78,7 +78,7 @@ public class TransportManager {
     private int sipPort;
 
     public TransportManager(TransactionManager transactionManager,
-            Config config, Logger logger) {
+                            Config config, Logger logger) {
         sipParser = new SipParser();
         datagramSockets = new Hashtable<SipTransportConnection, DatagramSocket>();
         messageSenders = new Hashtable<SipTransportConnection, MessageSender>();
@@ -87,58 +87,78 @@ public class TransportManager {
         this.config = config;
         this.logger = logger;
     }
-    
+
+    // 尝试创建一个客户端传输 ...
+    // 通过传输方式创建一个消息发送者
+    // 那么这个消息发送者目前实现只有 UDP ..
     public MessageSender createClientTransport(SipRequest sipRequest,
-            InetAddress inetAddress, int port, String transport)
-                throws IOException {
+                                               InetAddress inetAddress, int port, String transport)
+            throws IOException {
         return createClientTransport(sipRequest, inetAddress, port, transport,
                 NO_TTL);
     }
-    
+
+    // ttl ???
+    // ttl -> time to live ... 生存时间 ..
     public MessageSender createClientTransport(SipRequest sipRequest,
-            InetAddress inetAddress, int port, String transport, int ttl)
-                throws IOException {
+                                               InetAddress inetAddress, int port, String transport, int ttl)
+            throws IOException {
         //18.1
-        
+
         //via created by transaction layer to add branchid
+        // via 由事务层创建并增加了branchId ...
+        // 所以直接拿取 via
         SipHeaderFieldValue via = Utils.getTopVia(sipRequest);
+
+        // 开始拼接请求行 ...
+        // sip 请求是有格式的 ... 并没有详细了解 ...
         StringBuffer buf = new StringBuffer(DEFAULT_SIP_VERSION);
         buf.append(TRANSPORT_VIA_SEP);
         if (sipRequest.toString().getBytes().length > TRANSPORT_UDP_USUAL_MAX_SIZE) {
+            // 将传输变为TCP ..
             transport = TRANSPORT_TCP;
         }
         buf.append(transport);
+        // 远程地址是一个多播地址???
         if (inetAddress.isMulticastAddress()) {
             SipHeaderParamName maddrName = new SipHeaderParamName(PARAM_MADDR);
             via.addParam(maddrName, inetAddress.getHostAddress());
+            // 如果是ipv4
             if (inetAddress instanceof Inet4Address) {
+                // 增加TTL - 1
                 SipHeaderParamName ttlName = new SipHeaderParamName(PARAM_TTL);
                 via.addParam(ttlName, IPV4_TTL);
             }
         }
         //RFC3581
         //TODO check config
+        // ??? RPORT ...难道是 rtp poort ??
         via.addParam(new SipHeaderParamName(RFC3261.PARAM_RPORT), "");
+        // 空格
+        buf.append(TRANSPORT_VIA_SEP2); //space
 
-        buf.append(TRANSPORT_VIA_SEP2);//space
-        
         //TODO user server connection
-        
+
+        // 相当于这一块在本地开了一个端口进行通信 ...
+        // 获取配置中的共有ip ... 不存在使用本地网络ip
         InetAddress myAddress = config.getPublicInetAddress();
         if (myAddress == null) {
             myAddress = config.getLocalInetAddress();
         }
 
+        // 直接取主机地址,也可以使用hostName (如果能够DNS解析) ...
         buf.append(myAddress.getHostAddress()); //TODO use getHostName if real DNS
         buf.append(TRANSPORT_PORT_SEP);
-        
 
+        // 如果sip 端口小于 1
         if (sipPort < 1) {
             //use default port
+            // 那么使用默认端口 5060
             if (TRANSPORT_TCP.equals(transport) || TRANSPORT_UDP.equals(transport)
                     || TRANSPORT_SCTP.equals(transport)) {
                 sipPort = TRANSPORT_DEFAULT_PORT;
-            } else if (TRANSPORT_SCTP.equals(transport)) {
+                // 这里应该是 tls 才对 ...
+            } else if (TRANSPORT_TLS.equals(transport)) {
                 sipPort = TRANSPORT_TLS_PORT;
             } else {
                 throw new RuntimeException("unknown transport type");
@@ -146,12 +166,18 @@ public class TransportManager {
         }
         buf.append(sipPort);
         //TODO add sent-by (p. 143) Before...
-        
+
         via.setValue(buf.toString());
-        
+
+        // 然后创建一个Sip 传输连接 ...
+        // 这里肯定必然走内部地址 ...
+        // 通过这样和远程地址和端口建立连接
+        //  inetAddress / port 都是通过sip 请求中的目标sip client url中解析出来的 ...
+        // 那么假设目标用户就是一个手机电话号码 ... 那这里根本发不出去 ...
         SipTransportConnection connection = new SipTransportConnection(
                 config.getLocalInetAddress(), sipPort, inetAddress, port,
                 transport);
+
 
         MessageSender messageSender = messageSenders.get(connection);
         if (messageSender == null) {
@@ -159,27 +185,41 @@ public class TransportManager {
         }
         return messageSender;
     }
-    
+
     private String threadName(int port) {
         return getClass().getSimpleName() + " " + port;
     }
-    
+
+
+    // 创建服务端Transport ....
     public void createServerTransport(String transportType, int port)
             throws SocketException {
+
+        // 这里没有记录 conn 和 messageReceiver的关系 ... (一旦重复创建则有问题) ....
+
+        // 尝试创建一个这样的connect ...
+        // 服务端传输,是没有远程端口和地址的,仅仅是用来接收消息 ....
         SipTransportConnection conn = new SipTransportConnection(
-                    config.getLocalInetAddress(), port, null,
-                    SipTransportConnection.EMPTY_PORT, transportType);
-        
+                config.getLocalInetAddress(), port, null,
+                SipTransportConnection.EMPTY_PORT, transportType);
+
+        // 一般是没有的
         MessageReceiver messageReceiver = messageReceivers.get(conn);
         if (messageReceiver == null) {
+            // 创建MessageReceiver ...
             messageReceiver = createMessageReceiver(conn);
+            // 同样开启线程处理 ...
+            // 默认处于运行中 ...
             new Thread(messageReceiver, threadName(port)).start();
         }
+        // 可能仅仅只是做一个保障罢了 ...
+        // 如果messageReceiver 没有处于运行中 ... 再开一个
+        // 有可能之前这个消息接收器暂停了监听 ...
         if (!messageReceiver.isListening()) {
             new Thread(messageReceiver, threadName(port)).start();
         }
     }
-    
+
     public void sendResponse(SipResponse sipResponse) throws IOException {
         //18.2.2
         SipHeaderFieldValue topVia = Utils.getTopVia(sipResponse);
@@ -209,7 +249,7 @@ public class TransportManager {
             host = hostport;
             port = RFC3261.TRANSPORT_DEFAULT_PORT;
         }
-        
+
         String transport;
         if (buf.indexOf(RFC3261.TRANSPORT_TCP) > -1) {
             transport = RFC3261.TRANSPORT_TCP;
@@ -220,9 +260,9 @@ public class TransportManager {
                     " discarding response");
             return;
         }
-        
+
         String received =
-            topVia.getParam(new SipHeaderParamName(RFC3261.PARAM_RECEIVED));
+                topVia.getParam(new SipHeaderParamName(RFC3261.PARAM_RECEIVED));
         if (received != null) {
             host = received;
         }
@@ -242,9 +282,9 @@ public class TransportManager {
             logger.error("unknwon host", e);
             return;
         }
-        
+
         //actual sending
-        
+
         //TODO manage maddr parameter in top via for multicast
         if (buf.indexOf(RFC3261.TRANSPORT_TCP) > -1) {
 //            Socket socket = (Socket)factory.connections.get(connection);
@@ -291,62 +331,77 @@ public class TransportManager {
             messageSender.sendMessage(sipResponse);
 
         }
-        
-        
+
+
     }
-    
+
+    // 通过sip 传输连接的约定创建一个MessageSender ....
+    // 本质上就是创建 socket ...
     private MessageSender createMessageSender(final SipTransportConnection conn)
             throws IOException {
         MessageSender messageSender = null;
         Object socket = null;
+        // 如果是 udp
         if (RFC3261.TRANSPORT_UDP.equalsIgnoreCase(conn.getTransport())) {
             //TODO use Utils.getMyAddress to create socket on appropriate NIC
+            // 应该使用Utils.getMyAddress 去在合适的网卡上创建 socket
             DatagramSocket datagramSocket = datagramSockets.get(conn);
             if (datagramSocket == null) {
                 logger.debug("new DatagramSocket(" + conn.getLocalPort()
                         + ", " + conn.getLocalInetAddress() + ")");
                 // AccessController.doPrivileged added for plugin compatibility
                 datagramSocket = AccessController.doPrivileged(
-                    new PrivilegedAction<DatagramSocket>() {
+                        new PrivilegedAction<DatagramSocket>() {
 
-                        @Override
-                        public DatagramSocket run() {
-                            try {
-                                return new DatagramSocket(conn.getLocalPort(),
-                                        conn.getLocalInetAddress());
-                            } catch (SocketException e) {
-                                logger.error("cannot create socket", e);
-                            } catch (SecurityException e) {
-                                logger.error("security exception", e);
+                            @Override
+                            public DatagramSocket run() {
+                                try {
+                                    // 尝试创建,且 实现权限检查(判断由于权限执行此代码) ...
+                                    return new DatagramSocket(conn.getLocalPort(),
+                                            conn.getLocalInetAddress());
+                                } catch (SocketException e) {
+                                    logger.error("cannot create socket", e);
+                                } catch (SecurityException e) {
+                                    logger.error("security exception", e);
+                                }
+                                return null;
                             }
-                            return null;
                         }
-                    }
                 );
                 if (datagramSocket == null) {
                     throw new SocketException();
                 }
+                // 能够超时等待,不会一直阻塞 读取管道 ...
                 datagramSocket.setSoTimeout(SOCKET_TIMEOUT);
                 datagramSockets.put(conn, datagramSocket);
                 logger.info("added datagram socket " + conn);
             }
             socket = datagramSocket;
+
+            // 创建一个UDP 消息发送者 ....
             messageSender = new UdpMessageSender(conn.getRemoteInetAddress(),
                     conn.getRemotePort(), datagramSocket, config, logger);
         } else {
             // TODO
+            // 对于TCP 还没有支持
             // messageReceiver = new TcpMessageReceiver(port);
         }
+
+        // 消息发送器记录一下 ...
         messageSenders.put(conn, messageSender);
+
+        // 当一个消息在一种传输类型上发送,那么传输层必须能够通过这些类型接收消息 ...
         //when a mesage is sent over a transport, the transport layer
         //must also be able to receive messages on this transport
-        
+
 //        MessageReceiver messageReceiver =
 //            createMessageReceiver(conn, socket);
+        // 通常先获取 ....  如果没有,则创建 ...
         MessageReceiver messageReceiver = messageReceivers.get(conn);
         if (messageReceiver == null) {
-        	messageReceiver = createMessageReceiver(conn, socket);
-        	new Thread(messageReceiver, threadName(conn.getLocalPort())).start();
+            messageReceiver = createMessageReceiver(conn, socket);
+            // 通过new Thread 进行处理 ....
+            new Thread(messageReceiver, threadName(conn.getLocalPort())).start();
         }
 //        if (RFC3261.TRANSPORT_UDP.equalsIgnoreCase(conn.getTransport())) {
 //            messageSender = new UdpMessageSender(conn.getRemoteInetAddress(),
@@ -355,20 +410,32 @@ public class TransportManager {
 //        }
         return messageSender;
     }
-    
+
+    /**
+     * 创建消息 接收器
+     *
+     * @param conn   连接
+     * @param socket socket ...
+     * @return
+     * @throws IOException
+     */
     private MessageReceiver createMessageReceiver(SipTransportConnection conn,
-            Object socket) throws IOException {
+                                                  Object socket) throws IOException {
         MessageReceiver messageReceiver = null;
         if (RFC3261.TRANSPORT_UDP.equalsIgnoreCase(conn.getTransport())) {
-            DatagramSocket datagramSocket = (DatagramSocket)socket;
+            DatagramSocket datagramSocket = (DatagramSocket) socket;
             messageReceiver = new UdpMessageReceiver(datagramSocket,
                     transactionManager, this, config, logger);
+            // UDP 设置 sip serverTransport User
             messageReceiver.setSipServerTransportUser(sipServerTransportUser);
+        } else {
+//            TODO tcp ...
+//  .................
         }
         messageReceivers.put(conn, messageReceiver);
         return messageReceiver;
     }
-    
+
     private MessageReceiver createMessageReceiver(final SipTransportConnection conn)
             throws SocketException {
         MessageReceiver messageReceiver = null;
@@ -395,7 +462,7 @@ public class TransportManager {
                                 return null;
                             }
                         }
-                    );
+                );
                 datagramSocket.setSoTimeout(SOCKET_TIMEOUT);
                 if (conn.getLocalPort() == 0) {
                     sipTransportConnection = new SipTransportConnection(
@@ -430,36 +497,33 @@ public class TransportManager {
     }
 
     public void closeTransports() {
-        for (MessageReceiver messageReceiver: messageReceivers.values()) {
+        for (MessageReceiver messageReceiver : messageReceivers.values()) {
             messageReceiver.setListening(false);
         }
-        for (MessageSender messageSender: messageSenders.values()) {
+        for (MessageSender messageSender : messageSenders.values()) {
             messageSender.stopKeepAlives();
         }
-        try
-		{
-			Thread.sleep(SOCKET_TIMEOUT);
-		}
-		catch (InterruptedException e)
-		{
-			return;
-		}
+        try {
+            Thread.sleep(SOCKET_TIMEOUT);
+        } catch (InterruptedException e) {
+            return;
+        }
         // AccessController.doPrivileged added for plugin compatibility
         AccessController.doPrivileged(
-            new PrivilegedAction<Void>() {
-                @Override
-                public Void run() {
-                    for (DatagramSocket datagramSocket: datagramSockets.values()) {
-                        datagramSocket.close();
+                new PrivilegedAction<Void>() {
+                    @Override
+                    public Void run() {
+                        for (DatagramSocket datagramSocket : datagramSockets.values()) {
+                            datagramSocket.close();
+                        }
+                        return null;
                     }
-                    return null;
                 }
-            }
         );
 
-		datagramSockets.clear();
-		messageReceivers.clear();
-		messageSenders.clear();
+        datagramSockets.clear();
+        messageReceivers.clear();
+        messageSenders.clear();
     }
 
     public MessageSender getMessageSender(

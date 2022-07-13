@@ -22,7 +22,10 @@ package net.sourceforge.peers.media;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
 
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.rtp.RFC3551;
@@ -30,7 +33,12 @@ import net.sourceforge.peers.rtp.RtpSession;
 import net.sourceforge.peers.sdp.Codec;
 
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 9:56
+ * @Description 采集RTP 发送者
+ */
 public class CaptureRtpSender {
 
     public static final int PIPE_SIZE = 4096;
@@ -39,11 +47,15 @@ public class CaptureRtpSender {
     private Capture capture;
     private Encoder encoder;
     private RtpSender rtpSender;
+    private MediaMode mode;
+    private MediaManager mediaManager;
 
-    public CaptureRtpSender(RtpSession rtpSession, SoundSource soundSource,
-            boolean mediaDebug, Codec codec, Logger logger, String peersHome)
+    public CaptureRtpSender(MediaManager mediaManager, MediaMode mode, RtpSession rtpSession, SoundSource soundSource,
+                            boolean mediaDebug, Codec codec, Logger logger, String peersHome)
             throws IOException {
         super();
+        this.mode = mode;
+        this.mediaManager = mediaManager;
         this.rtpSession = rtpSession;
         // the use of PipedInputStream and PipedOutputStream in Capture,
         // Encoder and RtpSender imposes a synchronization point at the
@@ -68,6 +80,7 @@ public class CaptureRtpSender {
             rawDataInput.close();
             return;
         }
+        // 本质上通过 声音来源采集  声音 ... 并传给 capture ..
         capture = new Capture(rawDataOutput, soundSource, logger, latch);
         switch (codec.getPayloadType()) {
         case RFC3551.PAYLOAD_TYPE_PCMU:
@@ -83,8 +96,12 @@ public class CaptureRtpSender {
             rawDataInput.close();
             throw new RuntimeException("unknown payload type");
         }
+        // 仅当 完成音频输出之后,关闭此次session...
         rtpSender = new RtpSender(encodedDataInput, rtpSession, mediaDebug,
-                codec, logger, peersHome, latch);
+                codec, logger, peersHome,capture, latch,mode == MediaMode.url ? ele -> {
+            // 关闭 ...
+            this.stop();
+        }: null);
     }
 
     public void start() throws IOException {
@@ -99,11 +116,9 @@ public class CaptureRtpSender {
                 Encoder.class.getSimpleName());
         Thread rtpSenderThread = new Thread(rtpSender,
                 RtpSender.class.getSimpleName());
-        
         captureThread.start();
         encoderThread.start();
         rtpSenderThread.start();
-        
     }
 
     public void stop() {
@@ -116,6 +131,7 @@ public class CaptureRtpSender {
         if (rtpSender != null) {
             rtpSender.setStopped(true);
         }
+
     }
 
     public synchronized RtpSession getRtpSession() {

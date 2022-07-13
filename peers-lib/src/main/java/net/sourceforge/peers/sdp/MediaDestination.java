@@ -18,7 +18,12 @@
 */
 
 package net.sourceforge.peers.sdp;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:32
+ * @Description 媒体目标,端口编码
+ */
 public class MediaDestination {
 
     private String destination;

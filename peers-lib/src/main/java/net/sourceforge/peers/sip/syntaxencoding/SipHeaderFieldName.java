@@ -18,12 +18,20 @@
 */
 
 package net.sourceforge.peers.sip.syntaxencoding;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:19
+ * @Description 一个SipHeader 字段名
+ */
 public class SipHeaderFieldName {
 
     private final static SipHeadersTable SIP_HEADER_TABLE =
         new SipHeadersTable();
 
+    /**
+     * 长格式 ...
+     */
     private String name;
 
     public SipHeaderFieldName(String name) {

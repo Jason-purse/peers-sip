@@ -23,7 +23,12 @@ import net.sourceforge.peers.sip.RFC3261;
 import net.sourceforge.peers.sip.syntaxencoding.SipHeaderFieldName;
 import net.sourceforge.peers.sip.syntaxencoding.SipHeaderFieldValue;
 import net.sourceforge.peers.sip.syntaxencoding.SipHeaders;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:42
+ * @Description 一个Sip 消息 ..
+ */
 public abstract class SipMessage {
     
     protected String sipVersion;
@@ -66,6 +71,10 @@ public abstract class SipMessage {
         this.body = body;
     }
 
+    /**
+     * Sip 的ToString 形式就是标准的字节格式 ..
+     * @return
+     */
     @Override
     public String toString() {
         StringBuffer buf = new StringBuffer();

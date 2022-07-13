@@ -30,6 +30,7 @@ public class InviteClientTransactionStateInit extends InviteClientTransactionSta
 
     @Override
     public void start() {
+        // 也就是下一个状态是什么 ... 将事务状态设置为下一个阶段
         InviteClientTransactionState nextState = inviteClientTransaction.CALLING;
         inviteClientTransaction.setState(nextState);
     }

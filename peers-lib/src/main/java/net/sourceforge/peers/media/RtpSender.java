@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.rtp.RtpPacket;
@@ -49,10 +50,15 @@ public class RtpSender implements Runnable {
     private Logger logger;
     private String peersHome;
     private CountDownLatch latch;
-    
+    private Capture  capture;
+    private Consumer<Object> consumer;
+
+
     public RtpSender(PipedInputStream encodedData, RtpSession rtpSession,
-            boolean mediaDebug, Codec codec, Logger logger, String peersHome,
-            CountDownLatch latch) {
+                     boolean mediaDebug, Codec codec, Logger logger, String peersHome,
+                     Capture capture,
+                     CountDownLatch latch, Consumer<Object> consumer) {
+        this.capture = capture;
         this.encodedData = encodedData;
         this.rtpSession = rtpSession;
         this.mediaDebug = mediaDebug;
@@ -61,6 +67,7 @@ public class RtpSender implements Runnable {
         this.latch = latch;
         this.logger = logger;
         isStopped = false;
+        this.consumer = consumer;
         pushedPackets = Collections.synchronizedList(
                 new ArrayList<RtpPacket>());
     }
@@ -110,6 +117,11 @@ public class RtpSender implements Runnable {
                     tempBytesRead = encodedData.read(buffer, numBytesRead,
                             buf_size - numBytesRead);
                     numBytesRead += tempBytesRead;
+                    // 判断,如果管道没有数据,且isOver = true .. 那么设置状态 ...
+                    if(encodedData.available() <= 0 && capture.isOver()) {
+                        // 最后一次数据 .... 然后等待释放 ...
+                        break;
+                    }
                 }
             } catch (IOException e) {
                 logger.error("input/output error", e);
@@ -130,6 +142,8 @@ public class RtpSender implements Runnable {
                     break;
                 }
             }
+
+
             if (pushedPackets.size() > 0) {
                 RtpPacket pushedPacket = pushedPackets.remove(0);
                 rtpPacket.setMarker(pushedPacket.isMarker());
@@ -183,6 +197,11 @@ public class RtpSender implements Runnable {
                 return;
             }
         }
+        // 当它位于这个位置的时候,标识数据发送完毕,主动挂断 ...
+        // 尝试 做一个事情 ... 可以啥也不做 ...(也可以直接关闭此次session) ...
+        if(consumer != null) {
+            consumer.accept(null);
+        }
         latch.countDown();
         if (latch.getCount() != 0) {
             try {
@@ -192,6 +211,8 @@ public class RtpSender implements Runnable {
             }
         }
     }
+
+
 
     public synchronized void setStopped(boolean isStopped) {
         this.isStopped = isStopped;

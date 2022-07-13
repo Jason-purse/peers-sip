@@ -32,6 +32,7 @@ public class SipURI {
     private String stringRepresentation;
     /**
      * telephone-subscriber and optional port are not managed
+     * 也就是说 电话用户和可选的端口是不受管理的 ...
      */
     private String userinfo;
     private String host;

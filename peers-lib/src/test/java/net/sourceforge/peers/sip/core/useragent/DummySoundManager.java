@@ -19,7 +19,12 @@
 package net.sourceforge.peers.sip.core.useragent;
 
 import net.sourceforge.peers.media.AbstractSoundManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 9:31
+ * @Description 哑火的 音频管理器 ... 也就是不做任何处理 ....(不播放任何声音)
+ */
 public class DummySoundManager extends AbstractSoundManager {
 
     @Override

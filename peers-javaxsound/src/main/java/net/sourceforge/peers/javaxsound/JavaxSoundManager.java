@@ -39,16 +39,33 @@ import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.media.AbstractSoundManager;
 import net.sourceforge.peers.sip.Utils;
 
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 9:32
+ * @Description Javax 音频管理器 ... (这是用于共享系统上的设备) ....
+ */
 public class JavaxSoundManager extends AbstractSoundManager {
 
     private AudioFormat audioFormat;
     private TargetDataLine targetDataLine;
     private SourceDataLine sourceDataLine;
+    // 互斥量
     private Object sourceDataLineMutex;
+    // 目标音频和 源音频的 通道格式 ...
     private DataLine.Info targetInfo;
     private DataLine.Info sourceInfo;
+    // 用于媒体调试的文件输出 ...
+    /**
+     * 麦克风输出 ..
+     */
     private FileOutputStream microphoneOutput;
+
+    /**
+     * 说话者输入
+     */
     private FileOutputStream speakerInput;
+
     private boolean mediaDebug;
     private Logger logger;
     private String peersHome;
@@ -101,6 +118,7 @@ public class JavaxSoundManager extends AbstractSoundManager {
                 public Void run() {
                     try {
                         targetDataLine = (TargetDataLine) AudioSystem.getLine(targetInfo);
+                        // 打开一个 line,是否应该有对应的监听器处理
                         targetDataLine.open(audioFormat);
                     } catch (LineUnavailableException e) {
                         logger.error("target line unavailable", e);
@@ -113,6 +131,7 @@ public class JavaxSoundManager extends AbstractSoundManager {
                         return null;
                     }
                     targetDataLine.start();
+
                     synchronized (sourceDataLineMutex) {
                         try {
                             sourceDataLine = (SourceDataLine) AudioSystem.getLine(sourceInfo);
@@ -148,6 +167,9 @@ public class JavaxSoundManager extends AbstractSoundManager {
             }
             speakerInput = null;
         }
+
+        // 当执行非Privilege 代码时,如果为共享资音频资源 那么可能会出现问题
+
         // AccessController.doPrivileged added for plugin compatibility
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
 
@@ -159,8 +181,11 @@ public class JavaxSoundManager extends AbstractSoundManager {
                 }
                 synchronized (sourceDataLineMutex) {
                     if (sourceDataLine != null) {
+                        // 将内部缓冲区的数据全部放干 ...
                         sourceDataLine.drain();
+                        // 停止 line
                         sourceDataLine.stop();
+                        // 关闭 line
                         sourceDataLine.close();
                         sourceDataLine = null;
                     }
@@ -176,6 +201,7 @@ public class JavaxSoundManager extends AbstractSoundManager {
             return null;
         }
         int ready = targetDataLine.available();
+        // 不可用时循环
         while (ready == 0) {
             try {
                 Thread.sleep(2);
@@ -189,6 +215,7 @@ public class JavaxSoundManager extends AbstractSoundManager {
         }
         byte[] buffer = new byte[ready];
         targetDataLine.read(buffer, 0, buffer.length);
+        // 只要不打开这个标志就没问题(所以我们永远关闭它,然后让子代类能够 支持并发) ...
         if (mediaDebug) {
             try {
                 microphoneOutput.write(buffer, 0, buffer.length);

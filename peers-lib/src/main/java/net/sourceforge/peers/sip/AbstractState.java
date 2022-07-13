@@ -20,7 +20,12 @@
 package net.sourceforge.peers.sip;
 
 import net.sourceforge.peers.Logger;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:05
+ * @Description 状态抽象
+ */
 public abstract class AbstractState {
     
     protected String id;

@@ -31,7 +31,12 @@ import net.sourceforge.peers.Config;
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.sip.RFC3261;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:41
+ * @Description UDP 消息发送器,udp形式消息发送 ...
+ */
 public class UdpMessageSender extends MessageSender {
 
     private DatagramSocket datagramSocket;
@@ -60,11 +65,13 @@ public class UdpMessageSender extends MessageSender {
 
     @Override
     public synchronized void sendBytes(byte[] bytes) throws IOException {
+        logger.debug("---------------------------------------------------------------------------------\n");
         logger.debug("UdpMessageSender.sendBytes");
+        // new 一个新的数据包,进行数据发送 ....
         final DatagramPacket packet = new DatagramPacket(bytes, bytes.length,
                 inetAddress, port);
         logger.debug("UdpMessageSender.sendBytes " + bytes.length
-                + " " + inetAddress + ":" + port);
+                + " 远程地址(callee / sip sever -> callee user):" + inetAddress + ":" + port);
         // AccessController.doPrivileged added for plugin compatibility
         AccessController.doPrivileged(
             new PrivilegedAction<Void>() {
@@ -73,8 +80,10 @@ public class UdpMessageSender extends MessageSender {
                 public Void run() {
                     try {
                         logger.debug(datagramSocket.getLocalAddress().toString());
+                        // 发送数据包
                         datagramSocket.send(packet);
                     } catch (Throwable t) {
+                        // 发生异常  记录一下 ...
                         logger.error("throwable", new Exception(t));
                     }
                     return null;
@@ -82,7 +91,8 @@ public class UdpMessageSender extends MessageSender {
             }
         );
 
-        logger.debug("UdpMessageSender.sendBytes packet sent");
+        logger.debug("UdpMessageSender.sendBytes packet sent !!!! \n");
+        logger.debug("--------------------------------------------------------------------------------\n");
     }
 
 }

@@ -34,13 +34,14 @@ public class SipHeaders {
     }
     
     /**
-     * 
+     *  根据一个headerFileName 进行Header 增加 ....
      * @param name
      * @param value
      * @param index -1 to add at the end
      */
     public void add(SipHeaderFieldName name, SipHeaderFieldValue value, int index) {
         SipHeader header = new SipHeader(name, value);
+        // 于是判断是否可以一个Key 对应多个value ..
         if (headers.contains(header)) {
             header =  headers.get(headers.indexOf(header));
             SipHeaderFieldValue oldValue = header.getValue();

@@ -31,9 +31,16 @@ import net.sourceforge.peers.sip.syntaxencoding.SipHeaders;
 import net.sourceforge.peers.sip.transport.SipMessage;
 import net.sourceforge.peers.sip.transport.SipResponse;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 17:10
+ * @Description 那么这个弹窗管理器用于管理 校验信息填入 ...
+ */
 public class DialogManager {
-    
+    /**
+     * 保留 dialog
+     */
     private Hashtable<String, Dialog> dialogs;
     private Logger logger;
     
@@ -49,19 +56,27 @@ public class DialogManager {
      */
     public synchronized Dialog createDialog(SipResponse sipResponse) {
         SipHeaders sipHeaders = sipResponse.getSipHeaders();
+        // 拿取 callId
         String callID = sipHeaders.get(
                 new SipHeaderFieldName(RFC3261.HDR_CALLID)).toString();
+        // from
         SipHeaderFieldValue from = sipHeaders.get(
                 new SipHeaderFieldName(RFC3261.HDR_FROM));
+        // to
         SipHeaderFieldValue to = sipHeaders.get(
                 new SipHeaderFieldName(RFC3261.HDR_TO));
+        // from tag
         String fromTag = from.getParam(new SipHeaderParamName(RFC3261.PARAM_TAG));
+        // to tag
         String toTag = to.getParam(new SipHeaderParamName(RFC3261.PARAM_TAG));
         Dialog dialog;
+        // 获取via ...
         if (sipHeaders.get(new SipHeaderFieldName(RFC3261.HDR_VIA)) == null) {
+            // 那么表示这个 Dialog 是从UAS端调用的,
             //createDialog is called from UAS side, in layer Transaction User
             dialog = new Dialog(callID, toTag, fromTag, logger);
         } else {
+            // 来自UAC 端,在语法编辑层中 ...
             //createDialog is called from UAC side, in syntax encoding layer
             dialog = new Dialog(callID, fromTag, toTag, logger);
         }

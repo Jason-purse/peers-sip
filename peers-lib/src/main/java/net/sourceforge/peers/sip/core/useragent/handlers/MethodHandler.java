@@ -33,7 +33,12 @@ import net.sourceforge.peers.sip.transaction.TransactionManager;
 import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:18
+ * @Description 通过此类 进行Request 请求的正确响应 ...
+ */
 public abstract class MethodHandler {
 
     protected UserAgent userAgent;
@@ -59,15 +64,22 @@ public abstract class MethodHandler {
         //8.2.6
         SipResponse sipResponse = new SipResponse(statusCode, reasonPhrase);
         SipHeaders respHeaders = sipResponse.getSipHeaders();
+        //请求的headers ...
         SipHeaders reqHeaders = sipRequest.getSipHeaders();
+        // from
         SipHeaderFieldName fromName = new SipHeaderFieldName(RFC3261.HDR_FROM);
         respHeaders.add(fromName, reqHeaders.get(fromName));
+        // callId
         SipHeaderFieldName callIdName = new SipHeaderFieldName(RFC3261.HDR_CALLID);
         respHeaders.add(callIdName, reqHeaders.get(callIdName));
+        // CSeq
         SipHeaderFieldName cseqName = new SipHeaderFieldName(RFC3261.HDR_CSEQ);
         respHeaders.add(cseqName, reqHeaders.get(cseqName));
+
+        // Via
         SipHeaderFieldName viaName = new SipHeaderFieldName(RFC3261.HDR_VIA);
         respHeaders.add(viaName, reqHeaders.get(viaName));
+        // to
         SipHeaderFieldName toName = new SipHeaderFieldName(RFC3261.HDR_TO);
         String to = reqHeaders.get(toName).getValue();
         SipHeaderFieldValue toValue = new SipHeaderFieldValue(to);

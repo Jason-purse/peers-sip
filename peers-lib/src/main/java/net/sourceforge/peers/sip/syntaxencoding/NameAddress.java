@@ -21,8 +21,17 @@ package net.sourceforge.peers.sip.syntaxencoding;
 
 import net.sourceforge.peers.sip.RFC3261;
 
+/**
+ * 也就是说一个sip 地址
+ * 通过显示名和地址组成
+ */
 public class NameAddress {
 
+    /**
+     * 这要求 是指定的 sip 请求中的 uri地址格式
+     * @param nameAddress
+     * @return
+     */
     public static String nameAddressToUri(String nameAddress) {
         int leftPos = nameAddress.indexOf(RFC3261.LEFT_ANGLE_BRACKET);
         int rightPos = nameAddress.indexOf(RFC3261.RIGHT_ANGLE_BRACKET);

@@ -40,6 +40,9 @@ import net.sourceforge.peers.sip.transport.SipMessage;
 import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 
+/**
+ * 挑战管理器,其实也是认证处理
+ */
 public class ChallengeManager implements MessageInterceptor {
 
     public static final String ALGORITHM_MD5 = "MD5";

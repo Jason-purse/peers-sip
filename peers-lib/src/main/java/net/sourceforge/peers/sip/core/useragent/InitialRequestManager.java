@@ -42,7 +42,12 @@ import net.sourceforge.peers.sip.transactionuser.DialogManager;
 import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:36
+ * @Description 初始化请求管理器
+ */
 public class InitialRequestManager extends RequestManager
         implements ServerTransactionUser {
 
@@ -71,6 +76,8 @@ public class InitialRequestManager extends RequestManager
 
     /**
      * gives a new request outside of a dialog
+     *
+     * 一个请求的基本形式
      * 
      * @param requestUri
      * @param method
@@ -134,7 +141,7 @@ public class InitialRequestManager extends RequestManager
         headers.add(callIdName, new SipHeaderFieldValue(localCallId));
         
         //CSeq
-        
+        // 请求次数 ... 依次递增(例如注册,被要求凭证,第二次cSeq = 2)
         headers.add(new SipHeaderFieldName(RFC3261.HDR_CSEQ),
                 new SipHeaderFieldValue(userAgent.generateCSeq(method)));
         
@@ -145,19 +152,40 @@ public class InitialRequestManager extends RequestManager
             String profileUri) throws SipUriSyntaxException {
         return createInitialRequest(requestUri, method, profileUri, null);
     }
-    
+
+    /**
+     * 创建初始化请求 ...
+     * @param requestUri
+     * @param method
+     * @param profileUri
+     * @param callId
+     * @return
+     * @throws SipUriSyntaxException
+     */
     public SipRequest createInitialRequest(String requestUri, String method,
             String profileUri, String callId) throws SipUriSyntaxException {
         
         return createInitialRequest(requestUri, method, profileUri, callId,
                 null, null);
     }
-    
+
+    /**
+     *
+     * @param requestUri
+     * @param method
+     * @param profileUri
+     * @param callId
+     * @param fromTag ??
+     * @param messageInterceptor 进行消息拦截 ..
+     * @return
+     * @throws SipUriSyntaxException
+     */
     public SipRequest createInitialRequest(String requestUri, String method,
             String profileUri, String callId, String fromTag,
             MessageInterceptor messageInterceptor)
                 throws SipUriSyntaxException {
-        
+
+        // 生成一个通用的Sip请求 ...
         SipRequest sipRequest = getGenericRequest(requestUri, method,
                 profileUri, callId, fromTag);
         
@@ -167,20 +195,30 @@ public class InitialRequestManager extends RequestManager
         if (outboundProxy != null) {
             NameAddress outboundProxyNameAddress =
                 new NameAddress(outboundProxy.toString());
+            // 增加了路由 ... 但是不知道 外出代理是干嘛的
+            // 为注册和呼叫提供出站代理 ...
+            // 也就是说代理到这个地址上 ???
             sipRequest.getSipHeaders().add(new SipHeaderFieldName(RFC3261.HDR_ROUTE),
                     new SipHeaderFieldValue(outboundProxyNameAddress.toString()), 0);
         }
         ClientTransaction clientTransaction = null;
+        // 也就是初次请求等于invite ...
+        // 如果等于invite
         if (RFC3261.METHOD_INVITE.equals(method)) {
+            // 执行PreProcessInvite
+            // 于是这个 客户端事务就被创建出来了 ...
             clientTransaction = inviteHandler.preProcessInvite(sipRequest);
         } else if (RFC3261.METHOD_REGISTER.equals(method)) {
+            // 否则 注册
             clientTransaction = registerHandler.preProcessRegister(sipRequest);
         }
+
+        // 创建初始化请求末尾 ...
         createInitialRequestEnd(sipRequest, clientTransaction, profileUri,
                 messageInterceptor, true);
         return sipRequest;
     }
-    
+    // 这里加入了消息拦截器 / addContact 用来干什么 ...
     private void createInitialRequestEnd(SipRequest sipRequest,
             ClientTransaction clientTransaction, String profileUri,
             MessageInterceptor messageInterceptor, boolean addContact) {
@@ -189,11 +227,16 @@ public class InitialRequestManager extends RequestManager
     		return;
     	}
     	if (addContact) {
+            // 增加协商 ...联系
     	    addContact(sipRequest, clientTransaction.getContact(), profileUri);
     	}
         if (messageInterceptor != null) {
+            // 消息拦截器后置处理 ...
             messageInterceptor.postProcess(sipRequest);
         }
+        // 然后开启事务 ...
+        // 应该在客户端传输端口上创建消息接收器 ...
+        // 有点懵,本身不就是已经根据需要监听的sip 端口进行消息接收器创建了嘛 ...
         // TODO create message receiver on client transport port
         clientTransaction.start();
     }
@@ -283,10 +326,12 @@ public class InitialRequestManager extends RequestManager
         
         
         //Contact
+        // 也就是回来的路(回来的时候应该找谁) ....
         
         StringBuffer contactBuf = new StringBuffer();
         contactBuf.append(RFC3261.SIP_SCHEME);
         contactBuf.append(RFC3261.SCHEME_SEPARATOR);
+        // 拿到用户的一部分 ...
         String userPart = Utils.getUserPart(profileUri);
         contactBuf.append(userPart);
         contactBuf.append(RFC3261.AT);

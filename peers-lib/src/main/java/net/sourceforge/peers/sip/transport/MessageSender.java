@@ -28,7 +28,12 @@ import net.sourceforge.peers.Config;
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.sip.RFC3261;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:09
+ * @Description 消息发送器  用来发送消息 ...
+ */
 public abstract class MessageSender {
 
     public static final int KEEY_ALIVE_INTERVAL = 25; // seconds
@@ -57,16 +62,23 @@ public abstract class MessageSender {
         timer.scheduleAtFixedRate(new KeepAlive(), 0,
                 1000 * KEEY_ALIVE_INTERVAL);
     }
-    
+
+    // -------------------- core -------------------
+    // 发送Sip 消息
+    // 发送字节
     public abstract void sendMessage(SipMessage sipMessage) throws IOException;
     public abstract void sendBytes(byte[] bytes) throws IOException;
 
+
+    // 于是消息发送者中 就尝试先拿取公有地址,否则本地 ....
+    // 也就是回来的时候,消息格式(用户信息处理)
     public String getContact() {
         StringBuffer buf = new StringBuffer();
         InetAddress myAddress = config.getPublicInetAddress();
         if (myAddress == null) {
             myAddress = config.getLocalInetAddress();
         }
+        // hostname 也可以(需要做额外的处理,对应作者的话) ...
         buf.append(myAddress.getHostAddress());
         buf.append(RFC3261.TRANSPORT_PORT_SEP);
         //buf.append(config.getSipPort());

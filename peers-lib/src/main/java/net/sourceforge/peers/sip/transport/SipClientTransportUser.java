@@ -19,7 +19,12 @@
 
 package net.sourceforge.peers.sip.transport;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:05
+ * @Description 这个到底用来干什么??
+ */
 public interface SipClientTransportUser {
 
     public void requestTransportError(SipRequest sipRequest, Exception e);

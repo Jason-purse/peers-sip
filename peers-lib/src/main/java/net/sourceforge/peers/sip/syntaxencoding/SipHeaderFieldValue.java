@@ -23,7 +23,9 @@ import java.util.HashMap;
 
 import net.sourceforge.peers.sip.RFC3261;
 
-
+/**
+ * sip 中的一个value 可能有很长的数据量
+ */
 public class SipHeaderFieldValue {
 
     private String value;

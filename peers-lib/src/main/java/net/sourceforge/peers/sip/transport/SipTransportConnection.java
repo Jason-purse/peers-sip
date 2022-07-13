@@ -23,11 +23,18 @@ import java.net.InetAddress;
 
 import net.sourceforge.peers.sip.RFC3261;
 
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:12
+ * @Description Sip 传输连接 ...
+ */
 public class SipTransportConnection {
 
     public static final int EMPTY_PORT = -1;
-
+//    本地地址
     private InetAddress localInetAddress;
+    // 本地端口 ..
     private int localPort = EMPTY_PORT;
 
     private InetAddress remoteInetAddress;

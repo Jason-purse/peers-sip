@@ -40,15 +40,34 @@ import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:37
+ * @Description 请求管理器 ...
+ *
+ * 顾名思义,管理sip 请求
+ */
 public abstract class RequestManager {
 
+    /**
+     *
+     * usc----------- proxy ----------------------- other proxy ------------------------- usc
+     *
+     * 从请求中  获取目标 uri...
+     * @param sipRequest
+     * @param logger
+     * @return
+     */
     public static SipURI getDestinationUri(SipRequest sipRequest,
             Logger logger) {
         SipHeaders requestHeaders = sipRequest.getSipHeaders();
         SipURI destinationUri = null;
+
+        // 判断是否有出站路由 ...
         SipHeaderFieldValue route = requestHeaders.get(
                 new SipHeaderFieldName(RFC3261.HDR_ROUTE));
+        // 如果有,则将请求代理到 出站代理上 ...(原来是做一个中转) ...
         if (route != null) {
             try {
                 destinationUri = new SipURI(
@@ -58,6 +77,7 @@ public abstract class RequestManager {
             }
         }
         if (destinationUri == null) {
+            // 直接获取这个请求的uri ...
             destinationUri = sipRequest.getRequestUri();
         }
         return destinationUri;

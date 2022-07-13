@@ -24,9 +24,14 @@ import java.util.Timer;
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.sip.RFC3261;
 import net.sourceforge.peers.sip.transport.TransportManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:06
+ * @Description Invite 事务 ..
+ */
 public abstract class InviteTransaction extends Transaction {
-    
+
     protected InviteTransaction(String branchId, Timer timer,
             TransportManager transportManager,
             TransactionManager transactionManager, Logger logger) {

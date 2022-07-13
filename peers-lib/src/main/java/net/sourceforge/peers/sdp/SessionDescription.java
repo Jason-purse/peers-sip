@@ -24,7 +24,12 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.util.Hashtable;
 import java.util.List;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 16:06
+ * @Description 会话描述
+ */
 public class SessionDescription {
 
 	private long id;

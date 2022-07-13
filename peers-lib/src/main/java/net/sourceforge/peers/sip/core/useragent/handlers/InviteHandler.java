@@ -63,7 +63,12 @@ import net.sourceforge.peers.sip.transport.MessageSender;
 import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 10:14
+ * @Description invite 处理器(也就是事件回调) ....
+ */
 public class InviteHandler extends DialogMethodHandler
         implements ServerTransactionUser, ClientTransactionUser {
 
@@ -79,6 +84,8 @@ public class InviteHandler extends DialogMethodHandler
             TransportManager transportManager, Logger logger) {
         super(userAgent, dialogManager, transactionManager, transportManager,
                 logger);
+
+        // 增加了一个timer ...
         ackTimer = new Timer(getClass().getSimpleName() + " Ack "
                 + Timer.class.getSimpleName());
     }
@@ -146,6 +153,8 @@ public class InviteHandler extends DialogMethodHandler
         
     }
 
+
+    // 尝试获取一个DatagramSocket ..(UDP entry)
     private DatagramSocket getDatagramSocket() {
         DatagramSocket datagramSocket = userAgent.getMediaManager()
                 .getDatagramSocket();
@@ -157,10 +166,13 @@ public class InviteHandler extends DialogMethodHandler
                     @Override
                     public DatagramSocket run() {
                         DatagramSocket datagramSocket = null;
+                        // rtp 端口 ...
                         int rtpPort = userAgent.getConfig().getRtpPort();
                         try {
+                            // 如果等于 0
                             if (rtpPort == 0) {
                                 int localPort = -1;
+                                // 不断尝试创建rtp 本地socket entry ..
                                 while (localPort % 2 != 0) {
                                     datagramSocket = new DatagramSocket();
                                     localPort = datagramSocket.getLocalPort();
@@ -169,6 +181,7 @@ public class InviteHandler extends DialogMethodHandler
                                     }
                                 }
                             } else {
+                                // 否则直接创建 ...
                                 datagramSocket = new DatagramSocket(rtpPort);
                             }
                         } catch (SocketException e) {
@@ -181,10 +194,13 @@ public class InviteHandler extends DialogMethodHandler
             );
             logger.debug("new rtp DatagramSocket " + datagramSocket.hashCode());
             try {
+                // 同样设置 so 超时 ...
                 datagramSocket.setSoTimeout(TIMEOUT);
             } catch (SocketException e) {
                 logger.error("cannot set timeout on datagram socket ", e);
             }
+
+            // 给媒体管理器 设置rtp udp socket
             userAgent.getMediaManager().setDatagramSocket(datagramSocket);
         }
         return datagramSocket;
@@ -339,18 +355,21 @@ public class InviteHandler extends DialogMethodHandler
     //////////////////////////////////////////////////////////
     // UAC methods
     //////////////////////////////////////////////////////////
-    
+    // 尝试处理invite ???(pre 偏好?)
     public ClientTransaction preProcessInvite(SipRequest sipRequest)
             throws SipUriSyntaxException {
         
         //8.1.2
         SipHeaders requestHeaders = sipRequest.getSipHeaders();
+        // 通过请求管理器获取目标地址URI
         SipURI destinationUri = RequestManager.getDestinationUri(sipRequest,
                 logger);
 
         //TODO if header route is present, addrspec = toproute.nameaddress.addrspec
 
         String transport = RFC3261.TRANSPORT_UDP;
+        // 一般来说,我们都没有要求,传输形式,所以是UDP
+        // uri 参数
         Hashtable<String, String> params = destinationUri.getUriParameters();
         if (params != null) {
             String reqUriTransport = params.get(RFC3261.PARAM_TRANSPORT);
@@ -358,36 +377,54 @@ public class InviteHandler extends DialogMethodHandler
                 transport = reqUriTransport; 
             }
         }
+
+        // 目标端口
         int port = destinationUri.getPort();
+        // 如果等于默认端口
         if (port == SipURI.DEFAULT_PORT) {
+//            那么端口等于默认的 5060
             port = RFC3261.TRANSPORT_DEFAULT_PORT;
         }
+
+        // 很奇怪,不是上面已经通过外出路由请求头的形式,加入了这个外出Proxy,这里为什么又来一次 ...
         SipURI sipUri = userAgent.getConfig().getOutboundProxy();
         if (sipUri == null) {
             sipUri = destinationUri;
         }
         InetAddress inetAddress;
         try {
+            // 获取目标主机地址
             inetAddress = InetAddress.getByName(sipUri.getHost());
         } catch (UnknownHostException e) {
             throw new SipUriSyntaxException("unknown host: "
                     + sipUri.getHost(), e);
         }
+
+        // 然后创建客户端事务 ...
         ClientTransaction clientTransaction = transactionManager
                 .createClientTransaction(sipRequest, inetAddress,
                     port, transport, null, this);
+
+
+        // 这里就有所耦合了,估计目前还没有打算支持tcp ...
+
         DatagramSocket datagramSocket;
         synchronized (this) {
+            // 创建完毕之后,获取DatagramSocket ...
             datagramSocket = getDatagramSocket();
         }
         try {
+
+            // 进行 sip 信令通信 ... 那么offer 必然为null
             SessionDescription sessionDescription =
                 sdpManager.createSessionDescription(null,
                         datagramSocket.getLocalPort());
+            // 发送body
             sipRequest.setBody(sessionDescription.toString().getBytes());
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
         }
+        // 然后设置内容的类型为SDP ..
         requestHeaders.add(new SipHeaderFieldName(RFC3261.HDR_CONTENT_TYPE),
                 new SipHeaderFieldValue(RFC3261.CONTENT_TYPE_SDP));
         return clientTransaction;
@@ -438,23 +475,31 @@ public class InviteHandler extends DialogMethodHandler
     }
 
     public void provResponseReceived(SipResponse sipResponse, Transaction transaction) {
+        // 也就是接收到校验 响应了 ...
+        // 如果之前接收到 1xx ,则说明已经创建 ...(有可能中途又进行了校验) ...
         // dialog may have already been created if a previous 1xx has
         // already been received
         Dialog dialog = dialogManager.getDialog(sipResponse);
         boolean isFirstProvRespWithToTag = false;
         if (dialog == null) {
+            // 表示第一次 ...
+            // 拿取TO , 已经Tag ...
             SipHeaderFieldValue to = sipResponse.getSipHeaders().get(
                     new SipHeaderFieldName(RFC3261.HDR_TO));
             String toTag = to.getParam(new SipHeaderParamName(RFC3261.PARAM_TAG));
+            // 存在toTag
             if (toTag != null) {
+                // 创建 ...
                 dialog = dialogManager.createDialog(sipResponse);
                 isFirstProvRespWithToTag = true;
             } else {
                 //TODO maybe stop retransmissions
+                // 表示可能没有这个东西 ... 猜测
             }
         }
         
         if (dialog != null) {
+            // 为UAC 更新或者构建Dialog ....
             buildOrUpdateDialogForUac(sipResponse, transaction);
         }
         
@@ -471,15 +516,23 @@ public class InviteHandler extends DialogMethodHandler
 //        }
         //TODO this notification is probably useless because dialog state modification
         //     thereafter always notify dialog observers
+        // TODO 此通知可能毫无用处，因为此后对话框状态修改始终通知对话框观察者
         if (isFirstProvRespWithToTag) {
             SipListener sipListener = userAgent.getSipListener();
+            // 具有tag的 检测 ...
             if (sipListener != null) {
+                // 直接振铃
                 sipListener.ringing(sipResponse);
             }
             dialog.receivedOrSent1xx();
         }
+
+        // gudClosedCallId 判断 ...
         List<String> guiClosedCallIds = userAgent.getUac().getGuiClosedCallIds();
         String callId = Utils.getMessageCallId(sipResponse);
+
+        // 可能点了取消 ...
+        // 然后中断 ...
         if (guiClosedCallIds.contains(callId)) {
             SipRequest sipRequest = transaction.getRequest();
             logger.debug("cancel after prov response: sipRequest " + sipRequest
@@ -544,6 +597,7 @@ public class InviteHandler extends DialogMethodHandler
         String localAddress = userAgent.getConfig()
             .getLocalInetAddress().getHostAddress();
 
+        // 执行 媒体处理
         userAgent.getMediaManager().successResponseReceived(localAddress,
                 remoteAddress, remotePort, codec);
         
@@ -626,6 +680,7 @@ public class InviteHandler extends DialogMethodHandler
         List<String> guiClosedCallIds = userAgent.getUac().getGuiClosedCallIds();
         String callId = Utils.getMessageCallId(sipResponse);
         if (guiClosedCallIds.contains(callId)) {
+            // 也就是说,callId,我们加入了这个callId,仅仅给了一个信号,需要对方ack,返回callid,然后进行匹配,成功 则中中断 ....
             userAgent.terminate(request);
         }
         
@@ -671,8 +726,9 @@ public class InviteHandler extends DialogMethodHandler
     }
 
     public void transactionTimeout(ClientTransaction clientTransaction) {
-        // TODO Auto-generated method stub
-        
+       // TODO
+        // 如果事务超时,应该需要告知客户端 ....才行
+        userAgent.getSipListener().inviteError();
     }
 
     public void transactionTransportError() {

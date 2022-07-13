@@ -31,8 +31,8 @@ import net.sourceforge.peers.Logger;
 // - Peripherals
 //   - Channels: 1 (Mono)
 // - Quality
-//   - Sampling frequency of default: 8000 Hz
-//   - Default Sample Format: 16 bits
+//   - Sampling frequency of default: 8000 Hz(采样率 8000Hz)
+//   - Default Sample Format: 16 bits (16字节,单通道)
 //
 // Validate
 //

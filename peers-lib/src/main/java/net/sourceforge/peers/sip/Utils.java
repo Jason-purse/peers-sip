@@ -29,12 +29,18 @@ import net.sourceforge.peers.sip.syntaxencoding.SipHeaderFieldValue;
 import net.sourceforge.peers.sip.syntaxencoding.SipHeaders;
 import net.sourceforge.peers.sip.transport.SipMessage;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:52
+ * @Description sip 请求的一些工具方法 ...
+ */
 public class Utils {
 
     public static final String PEERSHOME_SYSTEM_PROPERTY = "peers.home";
     public static final String DEFAULT_PEERS_HOME = ".";
 
+    // 获得 请求header via(作为约定它始终位于values中的第一个)
     public final static SipHeaderFieldValue getTopVia(SipMessage sipMessage) {
         SipHeaders sipHeaders = sipMessage.getSipHeaders();
         SipHeaderFieldName viaName = new SipHeaderFieldName(RFC3261.HDR_VIA);
@@ -44,11 +50,20 @@ public class Utils {
         }
         return via;
     }
-    
+
+    /**
+     * 随机生成的一个tag
+     * @return
+     */
     public final static String generateTag() {
         return randomString(8);
     }
-    
+
+    /**
+     * callId 的随机生成 ..
+     * @param inetAddress
+     * @return
+     */
     public final static String generateCallID(InetAddress inetAddress) {
         //TODO make a hash using current time millis, public ip @, private @, and a random string
         StringBuffer buf = new StringBuffer();
@@ -59,7 +74,12 @@ public class Utils {
         buf.append(inetAddress.getHostName());
         return buf.toString();
     }
-    
+
+    /**
+     * 生成一个 branchId ...
+     * 这用来干什么
+     * @return
+     */
     public final static String generateBranchId() {
         StringBuffer buf = new StringBuffer();
         buf.append(RFC3261.BRANCHID_MAGIC_COOKIE);

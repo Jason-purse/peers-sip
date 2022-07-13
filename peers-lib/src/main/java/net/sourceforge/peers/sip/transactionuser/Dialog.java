@@ -34,7 +34,12 @@ import net.sourceforge.peers.sip.syntaxencoding.SipURI;
 import net.sourceforge.peers.sip.syntaxencoding.SipUriSyntaxException;
 import net.sourceforge.peers.sip.transport.SipRequest;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:14
+ * @Description 弹窗(例如 登录校验) ...
+ */
 public class Dialog {
 
     public static final char ID_SEPARATOR = '|';

@@ -32,7 +32,12 @@ import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.sip.RFC3261;
 import net.sourceforge.peers.sip.transaction.TransactionManager;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:49
+ * @Description UDP 消息接收器
+ */
 public class UdpMessageReceiver extends MessageReceiver {
 
     private DatagramSocket datagramSocket;
@@ -82,6 +87,8 @@ public class UdpMessageReceiver extends MessageReceiver {
         byte[] trimmedPacket = new byte[packet.getLength()];
         System.arraycopy(packet.getData(), 0,
                 trimmedPacket, 0, trimmedPacket.length);
+
+        // 然后进行数据处理 ...
         processMessage(trimmedPacket, packet.getAddress(),
                 packet.getPort(), RFC3261.TRANSPORT_UDP);
     }

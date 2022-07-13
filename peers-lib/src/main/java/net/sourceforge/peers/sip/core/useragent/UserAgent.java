@@ -50,7 +50,9 @@ import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
 
-
+/**
+ * 在我们的需求中,我们需要
+ */
 public class UserAgent {
 
     public final static String CONFIG_FILE = "conf" + File.separator + "peers.xml";
@@ -79,6 +81,13 @@ public class UserAgent {
     private SipListener sipListener;
     
     private SDPManager sdpManager;
+
+
+    /**
+     * 这个客户端用于 共享媒体设备的...
+     * peers 给出了javax 插件获取媒体设备...
+     * @see net.sourceforge.peers.media.SoundSource -> 实现   JavaxSoundManager
+     */
     private AbstractSoundManager soundManager;
     private MediaManager mediaManager;
 
@@ -162,6 +171,8 @@ public class UserAgent {
                 transactionManager,
                 transportManager,
                 logger);
+
+        // 注册的时候,可能会需要认证(服务器会返回一个凭证用于校验用户信息)
         RegisterHandler registerHandler = new RegisterHandler(this,
                 transactionManager,
                 transportManager,
@@ -212,9 +223,12 @@ public class UserAgent {
                 midDialogRequestManager,
                 dialogManager,
                 logger);
+
+
         registerHandler.setChallengeManager(challengeManager);
         inviteHandler.setChallengeManager(challengeManager);
         byeHandler.setChallengeManager(challengeManager);
+
 
         peers = new ArrayList<String>();
         //dialogs = new ArrayList<Dialog>();
@@ -225,6 +239,8 @@ public class UserAgent {
         // soundManager  = new SoundManager(config.isMediaDebug(), logger,
         // this.peersHome);
         this.soundManager = soundManager;
+
+        // 媒体管理器  ..
         mediaManager = new MediaManager(this, logger);
     }
     
@@ -242,7 +258,15 @@ public class UserAgent {
     public void unregister() throws SipUriSyntaxException {
         uac.unregister();
     }
-    
+
+
+    /**
+     * 执行 invite ...
+     * @param requestUri 请求uri 远程用户信息
+     * @param callId 调用ID (随机生成) ....
+     * @return
+     * @throws SipUriSyntaxException
+     */
     public SipRequest invite(String requestUri, String callId)
             throws SipUriSyntaxException {
         return uac.invite(requestUri, callId);

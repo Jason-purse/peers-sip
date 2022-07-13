@@ -20,12 +20,36 @@
 package net.sourceforge.peers.sip.transaction;
 
 import net.sourceforge.peers.sip.transport.SipResponse;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 14:30
+ * @Description 客户端事务用户(也就是最终客户端的事务属于那个用户,用户可以得到响应) ...
+ */
 public interface ClientTransactionUser {
+    /**
+     * 事务超时
+     * @param clientTransaction
+     */
     public void transactionTimeout(ClientTransaction clientTransaction);
+
+    /**
+     * 校验 接收的响应 ...
+     * @param sipResponse
+     * @param transaction
+     */
     public void provResponseReceived(SipResponse sipResponse, Transaction transaction);
+
+    /**
+     * 接收到的错误响应
+     * @param sipResponse
+     */
+    // TODO 最终需要传递事务到事务user
     //TODO eventually pass transaction to the transaction user
     public void errResponseReceived(SipResponse sipResponse);//3XX is considered as an error response
+
+    // 成功响应接收 ...
     public void successResponseReceived(SipResponse sipResponse, Transaction transaction);
+    // 事务传输失败 ..
     public void transactionTransportError();
 }

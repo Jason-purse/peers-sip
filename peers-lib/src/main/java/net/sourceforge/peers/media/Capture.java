@@ -25,7 +25,12 @@ import java.util.concurrent.CountDownLatch;
 
 import net.sourceforge.peers.Logger;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 9:58
+ * @Description 采集声音 ...
+ */
 public class Capture implements Runnable {
     
     public static final int SAMPLE_SIZE = 16;
@@ -36,6 +41,14 @@ public class Capture implements Runnable {
     private SoundSource soundSource;
     private Logger logger;
     private CountDownLatch latch;
+    /**
+     * 标识没有数据接入了 ..是否需要直接挂断 ...
+     */
+    private volatile boolean isOver  = false;
+
+    public boolean isOver() {
+        return isOver;
+    }
     
     public Capture(PipedOutputStream rawData, SoundSource soundSource,
             Logger logger, CountDownLatch latch) {
@@ -62,6 +75,9 @@ public class Capture implements Runnable {
                 return;
             }
         }
+
+        // 当它完毕之后,触发一个回调 ....
+        isOver = true;
         latch.countDown();
         if (latch.getCount() != 0) {
             try {

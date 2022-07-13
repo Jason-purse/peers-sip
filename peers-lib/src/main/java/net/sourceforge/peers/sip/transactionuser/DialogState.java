@@ -21,7 +21,12 @@ package net.sourceforge.peers.sip.transactionuser;
 
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.sip.AbstractState;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 17:17
+ * @Description Dialog 也有状态
+ */
 public abstract class DialogState extends AbstractState {
 
     protected Dialog dialog;

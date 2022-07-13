@@ -29,19 +29,44 @@ import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.TransportManager;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:06
+ * @Description 事务抽象 ...
+ */
 public abstract class Transaction {
 
     public static final char ID_SEPARATOR = '|';
-    
+    /**
+     * 有 branchId
+     */
     protected String branchId;
+    /**
+     * 事务属于什么请求方法
+     */
     protected String method;
-    
+
+    /**
+     * 对应的sip 请求
+     */
     protected SipRequest request;
+    /**
+     * 一堆响应 ...
+     */
     protected List<SipResponse> responses;
-    
+
+    /**
+     * 一个timer ...
+     */
     protected Timer timer;
+    /**
+     * 传输管理器
+     */
     protected TransportManager transportManager;
+    /**
+     * 事务管理器  ...
+     */
     protected TransactionManager transactionManager;
 
     protected Logger logger;
@@ -58,6 +83,10 @@ public abstract class Transaction {
         responses = Collections.synchronizedList(new ArrayList<SipResponse>());
     }
 
+    /**
+     * 这也就是事务的Id ....
+     * @see TransactionManager#getTransactionId(String, String)
+     */
     protected String getId() {
         StringBuffer buf = new StringBuffer();
         buf.append(branchId).append(ID_SEPARATOR);
@@ -65,6 +94,10 @@ public abstract class Transaction {
         return buf.toString();
     }
 
+    /**
+     * sip 的最新响应 ...
+     * @return
+     */
     public SipResponse getLastResponse() {
         if (responses.isEmpty()) {
             return null;

@@ -35,12 +35,20 @@ import net.sourceforge.peers.sip.transport.SipRequest;
 import net.sourceforge.peers.sip.transport.SipResponse;
 import net.sourceforge.peers.sip.transport.SipServerTransportUser;
 import net.sourceforge.peers.sip.transport.TransportManager;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 16:45
+ * @Description UAS 用于代理UAC ...
+ */
 public class UAS implements SipServerTransportUser {
 
     public final static ArrayList<String> SUPPORTED_METHODS;
     
     static {
+        /**
+         * 支持的几种方法 ...
+         */
         SUPPORTED_METHODS = new ArrayList<String>();
         SUPPORTED_METHODS.add(RFC3261.METHOD_INVITE);
         SUPPORTED_METHODS.add(RFC3261.METHOD_ACK);
@@ -67,6 +75,9 @@ public class UAS implements SipServerTransportUser {
         this.midDialogRequestManager = midDialogRequestManager;
         this.dialogManager = dialogManager;
         transportManager.setSipServerTransportUser(this);
+        // transport Manager 创建服务端Transport ....
+
+        // 它同样用了SipPort ... 看一下做了什么 ...
         transportManager.createServerTransport(
                 RFC3261.TRANSPORT_UDP, userAgent.getConfig().getSipPort());
     }
@@ -82,9 +93,13 @@ public class UAS implements SipServerTransportUser {
     }
 
     private void responseReceived(SipResponse sipResponse) {
-        
+        // 这也是我们猜测的 ...
+        // 它根本不关心响应 ...
     }
-    
+
+    // 接收到请求,我们才需要转发给USC 判断是否需要 处理 ....
+    // 也就是说,我们如果没有注册,那么服务器会发送验证Dialog 到UAS,然后UAS 帮我们处理了 ...
+    // 仅仅是猜测 ...
     private void requestReceived(SipRequest sipRequest) {
         //TODO 8.2
         
@@ -93,10 +108,14 @@ public class UAS implements SipServerTransportUser {
         SipHeaders headers = sipRequest.getSipHeaders();
         
         //TODO find whether the request is within an existing dialog or not
+        // 需要判断请求是否在存在的dialog中或者不是 ...
+        // 判断To,是谁 ...
         SipHeaderFieldValue to =
             headers.get(new SipHeaderFieldName(RFC3261.HDR_TO));
+        // 拿取tag
         String toTag = to.getParam(new SipHeaderParamName(RFC3261.PARAM_TAG));
         if (toTag != null) {
+            // 获取这个请求中的Dialog ....
             Dialog dialog = dialogManager.getDialog(sipRequest);
             if (dialog != null) {
                 //this is a mid-dialog request
@@ -107,7 +126,7 @@ public class UAS implements SipServerTransportUser {
                 
             }
         } else {
-            
+            // 否则 交给初始化请求管理器,管理初始化请求 ....
             initialRequestManager.manageInitialRequest(sipRequest);
             
         }

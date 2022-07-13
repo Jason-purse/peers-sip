@@ -20,10 +20,25 @@
 package net.sourceforge.peers.sip.transaction;
 
 import net.sourceforge.peers.sip.transport.SipResponse;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:04
+ * @Description 客户端事务,可以有的也就是接收响应 ... start / contact ???
+ */
 public interface ClientTransaction {
 
+    /**
+     * 接收到响应 ...
+     * @param sipResponse
+     */
     public void receivedResponse(SipResponse sipResponse);
+
+    /**
+     * 开启事务
+     */
     public void start();
+
+    // 客户端事务中的联系人 ...(也就是caller)
     public String getContact();
 }

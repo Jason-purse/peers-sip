@@ -22,7 +22,12 @@ package net.sourceforge.peers.sip.transaction;
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.sip.AbstractState;
 
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 15:05
+ * @Description 这样的一个invite 客户端事务状态 包含了一个事务 ...
+ */
 public abstract class InviteClientTransactionState extends AbstractState {
 
     protected InviteClientTransaction inviteClientTransaction;
@@ -32,13 +37,21 @@ public abstract class InviteClientTransactionState extends AbstractState {
         super(id, logger);
         this.inviteClientTransaction = inviteClientTransaction;
     }
-    
+
+    // 事务状态开始
     public void start() {}
+
+
+    // timerA 触发（重试)
     public void timerAFires() {}
+    // timerB 触发(事务中断)
     public void timerBFires() {}
+
     public void received2xx() {}
     public void received1xx() {}
     public void received300To699() {}
+
+
     public void transportError() {}
     public void timerDFires() {}
     

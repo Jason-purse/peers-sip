@@ -23,7 +23,13 @@ import java.util.HashMap;
 
 import net.sourceforge.peers.sip.RFC3261;
 
-
+/**
+ * @author FLJ
+ * @date `2022/7/13`
+ * @time 14:19
+ * @Description SipHeadersTable 表
+ * 一个字符对应了一个长格式
+ */
 public class SipHeadersTable {
     
     private HashMap<Character, String> headers;
@@ -45,7 +51,8 @@ public class SipHeadersTable {
         headers.put(RFC3261.COMPACT_HDR_TO,               RFC3261.HDR_TO);
         headers.put(RFC3261.COMPACT_HDR_VIA,              RFC3261.HDR_VIA);
     }
-    
+
+
     public String getLongForm(char compactForm) {
         return headers.get(compactForm);
     }

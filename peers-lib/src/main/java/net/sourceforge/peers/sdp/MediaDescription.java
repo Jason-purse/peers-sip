@@ -25,6 +25,12 @@ import java.net.InetAddress;
 import java.util.Hashtable;
 import java.util.List;
 
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 16:06
+ * @Description 媒体描述, 媒体类型,ip地址,与编码不相关的属性 以及端口 和编码集合 ...
+ */
 public class MediaDescription {
 
     private String type;

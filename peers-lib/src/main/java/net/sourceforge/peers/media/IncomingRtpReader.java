@@ -27,7 +27,12 @@ import net.sourceforge.peers.rtp.RtpListener;
 import net.sourceforge.peers.rtp.RtpPacket;
 import net.sourceforge.peers.rtp.RtpSession;
 import net.sourceforge.peers.sdp.Codec;
-
+/**
+ * @author FLJ
+ * @date 2022/7/13
+ * @time 10:40
+ * @Description 进入的Rtp 数据 reader ...
+ */
 public class IncomingRtpReader implements RtpListener {
 
     private RtpSession rtpSession;
@@ -59,8 +64,8 @@ public class IncomingRtpReader implements RtpListener {
 
     @Override
     public void receivedRtpPacket(RtpPacket rtpPacket) {
-        byte[] rawBuf = decoder.process(rtpPacket.getData());
         if (soundManager != null) {
+            byte[] rawBuf = decoder.process(rtpPacket.getData());
             soundManager.writeData(rawBuf, 0, rawBuf.length);
         }
     }
