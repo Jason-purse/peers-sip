@@ -207,6 +207,7 @@ public abstract class MessageReceiver implements Runnable {
                 //uas.messageReceived(sipMessage);
                 // 如果客户端事务等于空,那么 sip serverTransportUser 处理 ....
                 sipServerTransportUser.messageReceived(sipMessage);
+
                 logger.info("客户端事务为空,UAS 帮忙处理 ...");
             } else {
                 // 否则接收响应 ...
